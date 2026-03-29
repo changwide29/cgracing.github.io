@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - E-Commerce</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://kit.fontawesome.com/5efd6bd50f.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="auth.js"></script>
+</head>
+
+<body>
+    <div id="nav"></div>
+
+    <main>
+        <article>
+            <div class="path">
+                <small><a href="index.html">หน้าแรก</a> / สินค้า / <span
+                        id="path_product_name">รายละเอียด</span></small>
+            </div>
+
+            <div class="view-product">
+                <div class="view-product-left">
+                    <div class="main-img-container">
+                        <img id="product_img" src="" alt="Product Image">
+                    </div>
+                </div>
+
+                <div class="view-product-right">
+                    <div class="product-info-header">
+                        <h1 id="product_name"></h1>
+                        <div class="product-meta">
+                            <div id="product_category" class="badge badge-red"></div>
+                            <div id="product_rating" class="badge badge-yellow"></div>
+                            <span id="product_sold_count" class="text-muted small">ขายแล้ว 0 ชิ้น</span>
+                        </div>
+                    </div>
+
+                    <div class="price-section">
+                        <h2 id="product_price"></h2>
+                        <span class="price-tag">รวมภาษีมูลค่าเพิ่มแล้ว</span>
+                    </div>
+
+                    <div class="product-description">
+                        <p>สัมผัสประสบการณ์การใช้งานที่เหนือระดับด้วยสินค้าคุณภาพสูง ดีไซน์ทันสมัย
+                            และตอบโจทย์ทุกการใช้งานของคุณ</p>
+                    </div>
+
+                    <hr class="divider">
+
+                    <div class="purchase-actions">
+                        <div class="quantity-selector">
+                            <button type="button" onclick="changeQty(-1)"><i class="fa-solid fa-minus"></i></button>
+                            <input type="number" id="qty" value="1" min="1">
+                            <button type="button" onclick="changeQty(1)"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="btn btn-primary" id="add_cart">
+                            <i class="fa-solid fa-cart-plus"></i> เพิ่มลงรถเข็น
+                        </button>
+                        <button class="btn btn-outline-accent">
+                            <i class="fa-solid fa-heart"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+    <footer id="footer"></footer>
+    <script src="products.js"></script>
+    <script>
+        const product_img = document.getElementById("product_img")
+        const product_name = document.getElementById("product_name")
+        const product_category = document.getElementById("product_category")
+        const product_price = document.getElementById("product_price")
+        const product_rating = document.getElementById("product_rating")
+        const product_sold = document.getElementById("product_sold")
+        const add_cart = document.getElementById("add_cart");
+        const selected_product = JSON.parse(localStorage.getItem("selected_product"))
+        const qtyInput = document.getElementById('qty');
+
+        function changeQty(amount) {
+            let currentQty = parseInt(qtyInput.value);
+            currentQty += amount;
+            if (currentQty < 1) currentQty = 1;
+            qtyInput.value = currentQty;
+        }
+
+
+
+        window.addEventListener("DOMContentLoaded", () => {
+            if (selected_product) {
+                product_img.src = selected_product.img;
+                product_name.innerHTML = selected_product.name;
+                document.getElementById('path_product_name').innerText = selected_product.name;
+                product_category.innerHTML = `<i class="fa-solid fa-tag"></i> ${selected_product.category}`;
+                product_price.innerHTML = `<i class="fa-solid fa-baht-sign"></i> ${selected_product.price.toLocaleString()}`;
+                product_rating.innerHTML = `<i class="fa-solid fa-star"></i> ${selected_product.rating}`;
+
+                document.getElementById('product_sold_count').innerText = `ขายแล้ว ${selected_product.sold || 0} ชิ้น`;
+            }
+        });
+        add_cart.addEventListener("click", (e) => {
+
+            let product_cart = (localStorage.getItem("productCart") != null) ? JSON.parse(localStorage.getItem("productCart")) : []
+            product_cart.push({
+                "img": product_img.src,
+                "name": product_name.innerHTML,
+                "category": product_category.innerHTML,
+                "price": product_price.innerHTML,
+                "quantity": qtyInput.value
+            })
+            Swal.fire({
+                title: 'เพิ่มตระกร้า',
+                text: `${product_name.innerHTML} [ถูกเพิ่มแล้ว]`,
+                icon: 'success',
+                showConfirmButton: false,
+                timerProgressBar: true,
+                timer: 3000
+            })
+            console.log(`ตะกร้าอัพเดท: ${product_name.innerHTML}`)
+            console.log(product_cart)
+            localStorage.setItem("productCart", JSON.stringify(product_cart))
+        })
+        fetch('nav.html')
+            .then(response => response.text())
+            .then(data => {
+                const navElement = document.getElementById('nav');
+
+                navElement.innerHTML = '';
+                const fragment = document.createRange().createContextualFragment(data);
+                navElement.appendChild(fragment);
+
+                setActiveNav();
+            })
+            .catch(error => console.error('Error fetching nav:', error));
+        fetch('footer.html')
+            .then(response => response.text())
+            .then(data => {
+                const navElement = document.getElementById('footer');
+
+                navElement.innerHTML = '';
+                const fragment = document.createRange().createContextualFragment(data);
+                navElement.appendChild(fragment);
+
+            })
+            .catch(error => console.error('Error fetching footer:', error));
+        function setActiveNav() {
+            const currentPath = window.location.pathname.split("/").pop() || "index.html";
+            const navLinks = document.querySelectorAll('.site-sidebar ul li a');
+
+            navLinks.forEach(link => {
+                link.classList.remove('nav-active');
+                const linkPath = link.getAttribute('href');
+                if (currentPath === linkPath) {
+                    link.classList.add('nav-active');
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
